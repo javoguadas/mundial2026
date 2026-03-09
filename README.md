@@ -107,7 +107,7 @@ git init
 git add .
 git commit -m "Mundial 2026 - primera versión"
 git branch -M main
-git remote add origin https://github.com/TU-USUARIO/mundial2026.git
+git remote add origin https://github.com/CristoferMartinez27/mundial2026.git
 git push -u origin main
 ```
 

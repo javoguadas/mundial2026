@@ -102,20 +102,26 @@ const SBAuth = {
     } catch { return null; }
   },
 
-  async login(email, password) {
+  // Convierte username → email interno (el usuario nunca lo ve)
+  _toEmail(username) {
+    return `${username.toLowerCase().replace(/[^a-z0-9._-]/g, '_')}@mundial2026.app`;
+  },
+
+  async login(username, password) {
+    const email = this._toEmail(username);
     const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error_description || data.msg || 'Error al iniciar sesión');
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Usuario o contraseña incorrectos');
     this.setSession(data);
     return data;
   },
 
-  async register(email, password, nombre, username) {
-    // 1) Crear usuario en Auth
+  async register(username, password, nombre) {
+    const email = this._toEmail(username);
     const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },

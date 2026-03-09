@@ -128,7 +128,7 @@ begin
     new.id,
     coalesce(new.raw_user_meta_data->>'nombre', 'Usuario'),
     coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
-    new.email,
+    null,   -- no guardamos el email falso interno
     false
   );
   return new;
@@ -284,5 +284,9 @@ insert into public.equipos_stats (equipo,goles,tarjetas,offsides,ranking) values
 on conflict (equipo) do nothing;
 
 -- ── LISTO ─────────────────────────────────────────────────
--- Ahora ve a Authentication → Settings y desactiva "Confirm email" si no quieres
--- que los usuarios tengan que confirmar su correo para poder entrar.
+-- ⚠️  CONFIGURACIÓN OBLIGATORIA EN SUPABASE (sin esto no funciona el login):
+-- 1. Authentication → Settings → Email Auth
+--    - Desactiva "Confirm email" (toggle OFF) — los usuarios no tienen correo real
+--    - Desactiva "Secure email change" (toggle OFF)
+-- 2. Authentication → Settings → Email Auth → "Enable email provider" debe estar ON
+--    (aunque no se muestre el email al usuario, Supabase lo necesita internamente)
