@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Entrar — Mundial 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/styles.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><span class="trophy">⚽</span><span class="brand-text">MUNDIAL <strong>2026</strong></span></div>
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html">Inicio</a>
+      <div id="authArea"></div>
+    </div>
+    <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+  </nav>
+
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="trophy-big">⚽</div>
+        <h2>MUNDIAL 2026</h2>
+        <p style="color:var(--text-dim);font-size:.85rem;margin-top:.3rem">Quiniela & Estadísticas</p>
+      </div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="mostrarTab('login')">Iniciar Sesión</div>
+        <div class="auth-tab" id="tabReg" onclick="mostrarTab('registro')">Registrarse</div>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="formLogin">
+        <div id="alertLogin"></div>
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" id="loginEmail" placeholder="correo@ejemplo.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password"/>
+        </div>
+        <button class="btn btn-primary btn-full" id="btnLogin" onclick="login()">Entrar</button>
+      </div>
+
+      <!-- REGISTRO -->
+      <div id="formReg" class="hidden">
+        <div id="alertReg"></div>
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="regNombre" placeholder="Nombre"/>
+        </div>
+        <div class="form-group">
+          <label>Apellido</label>
+          <input type="text" id="regApellido" placeholder="Apellido"/>
+        </div>
+        <div class="form-group">
+          <label>Nombre de usuario</label>
+          <input type="text" id="regUsername" placeholder="nombre_usuario"/>
+        </div>
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" id="regEmail" placeholder="correo@ejemplo.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="regPass" placeholder="Mínimo 6 caracteres" autocomplete="new-password"/>
+        </div>
+        <button class="btn btn-primary btn-full" id="btnReg" onclick="registrar()">Crear cuenta</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/supabase.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/auth-ui.js"></script>
+  <script>
+    // Si ya hay sesión, redirigir
+    if (SBAuth.getSession()) {
+      const p = JSON.parse(localStorage.getItem('user_profile') || 'null');
+      window.location.href = p?.es_admin ? '../pages/admin.html' : '../index.html';
+    }
+
+    function mostrarTab(tab) {
+      document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('formReg').classList.toggle('hidden', tab !== 'registro');
+      document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('tabReg').classList.toggle('active', tab === 'registro');
+    }
+
+    async function login() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass  = document.getElementById('loginPass').value;
+      const alEl  = document.getElementById('alertLogin');
+      const btn   = document.getElementById('btnLogin');
+      if (!email || !pass) { alEl.innerHTML = '<div class="alert alert-error">Completa todos los campos.</div>'; return; }
+
+      btn.disabled = true; btn.textContent = 'Ingresando...';
+      try {
+        const data = await SBAuth.login(email, pass);
+        // Cargar perfil
+        const profile = await SBAuth.getProfile(data.user.id);
+        localStorage.setItem('user_profile', JSON.stringify(profile));
+        window.location.href = profile?.es_admin ? '../pages/admin.html' : '../index.html';
+      } catch (e) {
+        alEl.innerHTML = `<div class="alert alert-error">${e.message || 'Error al iniciar sesión'}</div>`;
+        btn.disabled = false; btn.textContent = 'Entrar';
+      }
+    }
+
+    async function registrar() {
+      const nombre   = document.getElementById('regNombre').value.trim();
+      const apellido = document.getElementById('regApellido').value.trim();
+      const username = document.getElementById('regUsername').value.trim().toLowerCase();
+      const email    = document.getElementById('regEmail').value.trim();
+      const pass     = document.getElementById('regPass').value;
+      const alEl     = document.getElementById('alertReg');
+      const btn      = document.getElementById('btnReg');
+
+      if (!nombre || !username || !email || !pass) {
+        alEl.innerHTML = '<div class="alert alert-error">Completa todos los campos obligatorios.</div>';
+        return;
+      }
+      if (pass.length < 6) {
+        alEl.innerHTML = '<div class="alert alert-error">La contraseña debe tener al menos 6 caracteres.</div>';
+        return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Creando cuenta...';
+      const nombreCompleto = apellido ? `${nombre} ${apellido}` : nombre;
+      try {
+        await SBAuth.register(email, pass, nombreCompleto, username);
+        alEl.innerHTML = `<div class="alert alert-success">
+          ✅ Cuenta creada.<br>
+          <small>Revisa tu correo para confirmar tu cuenta, luego inicia sesión.</small>
+        </div>`;
+        setTimeout(() => mostrarTab('login'), 2500);
+      } catch (e) {
+        alEl.innerHTML = `<div class="alert alert-error">${e.message || 'Error al registrar'}</div>`;
+      }
+      btn.disabled = false; btn.textContent = 'Crear cuenta';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      if (!document.getElementById('formReg').classList.contains('hidden')) registrar();
+      else login();
+    });
+  </script>
+</body>
+</html>

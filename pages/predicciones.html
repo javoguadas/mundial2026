@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Predicciones — Mundial 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/styles.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand"><span class="trophy">⚽</span><span class="brand-text">MUNDIAL <strong>2026</strong></span></div>
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html">Inicio</a>
+      <a href="calendario.html">Calendario</a>
+      <a href="grupos.html">Grupos</a>
+      <a href="brackets.html">Bracket</a>
+      <a href="quiniela.html">Quiniela</a>
+      <a href="lideres.html">Líderes</a>
+      <div id="authArea"><a href="login.html" class="btn-nav">Entrar</a></div>
+    </div>
+      <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+  </nav>
+
+  <div class="page-header">
+    <h1>📊 PREDICCIONES ESTADÍSTICAS</h1>
+    <p>Selecciona dos selecciones para ver el análisis completo</p>
+  </div>
+
+  <div class="page-content">
+    <!-- Selector -->
+    <div class="group-block" style="padding:1.5rem;max-width:700px;margin:0 auto 2rem">
+      <div class="group-header">🔍 SELECCIONAR PARTIDO</div>
+      <div style="padding:1.2rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="flex:1;min-width:180px;margin:0">
+          <label>Selección A</label>
+          <select id="equipoA" onchange="analizar()">
+            <option value="">— Elige equipo —</option>
+          </select>
+        </div>
+        <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--text-dim);padding-bottom:.4rem">vs</div>
+        <div class="form-group" style="flex:1;min-width:180px;margin:0">
+          <label>Selección B</label>
+          <select id="equipoB" onchange="analizar()">
+            <option value="">— Elige equipo —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resultado análisis -->
+    <div id="resultadoAnalisis" class="hidden" style="max-width:700px;margin:0 auto"></div>
+  </div>
+
+  <footer class="footer">
+    <p>⚽ Proyecto Escolar de Estadística — Copa Mundial FIFA 2026</p>
+  </footer>
+
+  <script src="../js/supabase.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/auth-ui.js"></script>
+  <script>
+    function init() {
+      const selA = document.getElementById('equipoA');
+      const selB = document.getElementById('equipoB');
+      const equipos = Object.keys(EQUIPOS_STATS).sort();
+
+      equipos.forEach(eq => {
+        selA.innerHTML += `<option value="${eq}">${eq}</option>`;
+        selB.innerHTML += `<option value="${eq}">${eq}</option>`;
+      });
+    }
+
+    function barra(val, max, color) {
+      const pct = Math.min(100, (val / max) * 100);
+      return `<div style="background:var(--bg3);border-radius:3px;height:8px;margin-top:.3rem">
+        <div style="background:${color};height:8px;border-radius:3px;width:${pct}%;transition:width .5s"></div>
+      </div>`;
+    }
+
+    async function analizar() {
+      const eqA = document.getElementById('equipoA').value;
+      const eqB = document.getElementById('equipoB').value;
+      const container = document.getElementById('resultadoAnalisis');
+
+      if (!eqA || !eqB || eqA === eqB) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      const pred = await predecirPartido(eqA, eqB);
+      const stats = await obtenerStats();
+      const A = stats[eqA], B = stats[eqB];
+      container.classList.remove('hidden');
+
+      container.innerHTML = `
+        <!-- Marcador predicho -->
+        <div class="group-block mb2" style="padding:1.5rem;text-align:center">
+          <div style="font-size:.7rem;letter-spacing:3px;color:var(--text-dim);margin-bottom:1rem">MARCADOR PRONOSTICADO</div>
+          <div style="display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-bottom:1rem">
+            <div style="font-family:var(--font-display);font-size:1.5rem">${eqA}</div>
+            <div style="font-family:var(--font-display);font-size:3.5rem;color:var(--gold)">${pred.marcA} – ${pred.marcB}</div>
+            <div style="font-family:var(--font-display);font-size:1.5rem">${eqB}</div>
+          </div>
+          <div class="pred-explain">${pred.explicacion}</div>
+        </div>
+
+        <!-- Probabilidades -->
+        <div class="group-block mb2" style="padding:1.5rem">
+          <div class="group-header">📈 PROBABILIDADES</div>
+          <div style="padding:1rem;display:flex;flex-direction:column;gap:1rem">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:.85rem">
+                <span>${eqA}</span>
+                <strong style="color:var(--cyan)">${pred.probA}%</strong>
+              </div>
+              ${barra(pred.probA, 100, 'var(--cyan)')}
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:.85rem">
+                <span>Empate</span>
+                <strong style="color:var(--text-dim)">${pred.probEmpate}%</strong>
+              </div>
+              ${barra(pred.probEmpate, 100, 'var(--text-dim)')}
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:.85rem">
+                <span>${eqB}</span>
+                <strong style="color:var(--red)">${pred.probB}%</strong>
+              </div>
+              ${barra(pred.probB, 100, 'var(--red)')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Estadísticas comparativas -->
+        <div class="group-block mb2" style="padding:1.5rem">
+          <div class="group-header">📊 COMPARATIVA ESTADÍSTICA</div>
+          <div style="padding:1rem">
+            ${statRow('⚽ Promedio de goles', A.goles, B.goles, eqA, eqB, 3)}
+            ${statRow('🟨 Promedio tarjetas', A.tarjetas, B.tarjetas, eqA, eqB, 3, true)}
+            ${statRow('🚩 Promedio offsides', A.offsides, B.offsides, eqA, eqB, 4)}
+          </div>
+        </div>
+
+        <!-- Predicciones extras -->
+        <div class="group-block" style="padding:1.5rem">
+          <div class="group-header">🔢 OTRAS PREDICCIONES</div>
+          <div style="padding:1rem;display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">
+            <div class="pred-stat"><div class="val">${pred.tarjAm}</div><div class="lbl">🟨 Amarillas totales</div></div>
+            <div class="pred-stat"><div class="val">${pred.tarjRj}</div><div class="lbl">🟥 Rojas totales</div></div>
+            <div class="pred-stat"><div class="val">${pred.offs}</div><div class="lbl">🚩 Offsides totales</div></div>
+            <div class="pred-stat"><div class="val">${pred.marcA + pred.marcB}</div><div class="lbl">⚽ Total goles</div></div>
+            <div class="pred-stat"><div class="val">${+(pred.golesA + pred.golesB).toFixed(1)}</div><div class="lbl">📊 Prom goles ponderado</div></div>
+            <div class="pred-stat"><div class="val">${pred.probA > pred.probB ? eqA.split(' ')[0] : eqB.split(' ')[0]}</div><div class="lbl">🏆 Favorito</div></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function statRow(label, valA, valB, nameA, nameB, max, inverted = false) {
+      const winner = inverted ? (valA < valB ? nameA : nameB) : (valA > valB ? nameA : nameB);
+      const pctA = Math.min(100, (valA / max) * 100);
+      const pctB = Math.min(100, (valB / max) * 100);
+      return `<div style="margin-bottom:1.2rem">
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.4rem">
+          <span>${label}</span>
+          <span style="color:var(--gold);font-size:.75rem">Ventaja: ${winner}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 60px 1fr;gap:.5rem;align-items:center">
+          <div>
+            <div style="font-size:.8rem;color:var(--text-dim)">${nameA}: <strong style="color:var(--text)">${valA}</strong></div>
+            <div style="background:var(--bg3);border-radius:3px;height:6px;margin-top:.2rem">
+              <div style="background:var(--cyan);height:6px;border-radius:3px;width:${pctA}%"></div>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:.7rem;color:var(--text-dim)">vs</div>
+          <div>
+            <div style="font-size:.8rem;color:var(--text-dim)">${nameB}: <strong style="color:var(--text)">${valB}</strong></div>
+            <div style="background:var(--bg3);border-radius:3px;height:6px;margin-top:.2rem">
+              <div style="background:var(--red);height:6px;border-radius:3px;width:${pctB}%"></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
