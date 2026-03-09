@@ -134,18 +134,34 @@ async function predecirPartido(eqA, eqB) {
   const gB = +(B.goles * fB * 0.9).toFixed(2);
   const mA = Math.round(gA), mB = Math.round(gB);
   const empV = Math.max(mA, mB);
+  // Sugerencias: siempre 4 resultados distintos y coherentes
+  const nomA = eqA.split(' ')[0];
+  const nomB = eqB.split(' ')[0];
+  // "Más probable" = marcador predicho redondeado
+  const sug1 = { a:mA,    b:mB    };
+  // "Gana Local"    = local +1 sobre el marcador predicho si ya gana, sino local+1 vs 0
+  const sug2 = mA > mB
+    ? { a:mA+1, b:mB   }   // refuerza victoria local
+    : { a:mB+1, b:mA   };  // voltea a favor del local
+  // "Gana Visitante" = visitante +1
+  const sug3 = mB > mA
+    ? { a:mA,   b:mB+1 }   // refuerza victoria visitante
+    : { a:mA,   b:mA+1 };  // voltea a favor del visitante
+  // "Empate" = mismo gol para ambos (el mayor de los dos predichos)
+  const empateVal = Math.max(mA, mB);
+  const sug4 = { a:empateVal, b:empateVal };
   const sugerencias = [
-    { a:mA,    b:mB,    label:"Más probable" },
-    { a:mA+1,  b:mB,    label:`Gana ${eqA.split(' ')[0]}` },
-    { a:mA,    b:mB+1,  label:`Gana ${eqB.split(' ')[0]}` },
-    { a:empV,  b:empV,  label:"Empate" },
+    { ...sug1, label:"Más probable" },
+    { ...sug2, label:`Gana ${nomA}` },
+    { ...sug3, label:`Gana ${nomB}` },
+    { ...sug4, label:"Empate" },
   ];
   let probA = Math.min(72, Math.max(20, Math.round((gA/(gA+gB+0.001))*100*(fA/fB))));
   const probEmpate = 15;
   const probB = 100 - probA - probEmpate;
-  const tarjAm = +((A.tarjetas+B.tarjetas)/2).toFixed(1);
-  const tarjRj = +(tarjAm*0.15).toFixed(1);
-  const offs   = +((A.offsides+B.offsides)/2).toFixed(1);
+  const tarjAm = +(A.tarjetas + B.tarjetas).toFixed(1);   // SUMA de ambas selecciones
+  const tarjRj = +(tarjAm * 0.12).toFixed(1);              // ~12% de las amarillas
+  const offs   = +(A.offsides + B.offsides).toFixed(1);    // SUMA de ambas selecciones
   let exp = A.goles > B.goles
     ? `${eqA} tiene mayor promedio de goles (${A.goles} vs ${B.goles}).`
     : B.goles > A.goles
