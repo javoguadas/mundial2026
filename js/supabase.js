@@ -4,8 +4,8 @@
 //     de tu proyecto en https://supabase.com/dashboard
 // ============================================================
 
-const SUPABASE_URL = 'https://fpnyxizzxrukbyryuiih.supabase.co';   // <-- cambia esto
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwbnl4aXp6eHJ1a2J5cnl1aWloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNDEwMTksImV4cCI6MjA4ODYxNzAxOX0.lTtS6x5a69TKJTs8fS_NtcpXStaifqmz80FgFF460nQ';                   // <-- cambia esto
+const SUPABASE_URL = 'https://zbxbkueagxhobzqmmebi.supabase.co';   // <-- cambia esto
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpieGJrdWVhZ3hob2J6cW1tZWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MTMzMzgsImV4cCI6MjA5MTA4OTMzOH0.tvoFae66gsEWnW-KNbOKX48K3p4LnWrd90ZJlEDv06w';                   // <-- cambia esto
 
 // Cliente Supabase (usamos la API REST directamente, sin SDK extra)
 const SB = {
